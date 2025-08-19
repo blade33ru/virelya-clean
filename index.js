@@ -2,7 +2,7 @@
 const bodyParser = require("body-parser");
 const axios = require("axios");
 const { Configuration, OpenAIApi } = require("openai");
-require("dotenv").config();
+//require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
