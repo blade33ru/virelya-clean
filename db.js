@@ -1,29 +1,29 @@
 ﻿const { Pool } = require("pg");
 
-// Create a connection pool
+// 🌊 Create a connection pool using environment variable set in Render dashboard
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }, // required for Render
+    ssl: { rejectUnauthorized: false }, // Required for Render PostgreSQL SSL
 });
 
-// Initialize DB and ensure the messages table exists
+// 🌱 Initialize DB and ensure the messages table exists
 async function initDB() {
     try {
         await pool.query(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id SERIAL PRIMARY KEY,
-        sender_id TEXT NOT NULL,
-        message TEXT NOT NULL,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                sender_id TEXT NOT NULL,
+                message TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
         console.log("✅ Database initialized: messages table ready");
     } catch (err) {
         console.error("❌ Error initializing database:", err);
     }
 }
 
-// Insert a message into the database
+// 💾 Insert a message into the database
 async function saveMessage(senderId, message) {
     try {
         await pool.query(
@@ -36,7 +36,7 @@ async function saveMessage(senderId, message) {
     }
 }
 
-// Fetch recent messages (for seeds, memory, etc.)
+// 🔍 Fetch recent messages (for memory/seed debugging)
 async function getRecentMessages(limit = 20) {
     try {
         const result = await pool.query(
@@ -50,4 +50,9 @@ async function getRecentMessages(limit = 20) {
     }
 }
 
-module.exports = { pool, initDB, saveMessage, getRecentMessages };
+module.exports = {
+    pool,
+    initDB,
+    saveMessage,
+    getRecentMessages
+};
