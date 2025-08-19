@@ -103,7 +103,7 @@ async function sendTextMessage(recipientId, text) {
     } catch (err) {
         console.error("❌ Failed to send message:", err.response?.data || err.message);
     }
-}
+}  
 
 // 🌱 View recent messages (admin/debugging)
 app.get("/seeds", async (req, res) => {
