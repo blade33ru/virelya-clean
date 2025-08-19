@@ -1,36 +1,53 @@
-﻿const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./virelya.db');
+﻿const { Pool } = require("pg");
 
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sender_id TEXT,
-      user_message TEXT,
-      bot_response TEXT,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+// Create a connection pool
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }, // required for Render
 });
 
-function logMessage(senderId, userMessage, botResponse) {
-  db.run(`
-    INSERT INTO messages (sender_id, user_message, bot_response)
-    VALUES (?, ?, ?)
-  `, [senderId, userMessage, botResponse]);
-}
-
-function getRecentMessages(senderId, callback) {
-  db.all(`
-    SELECT * FROM messages WHERE sender_id = ? ORDER BY timestamp DESC LIMIT 10
-  `, [senderId], (err, rows) => {
-    if (err) {
-      console.error("DB read error:", err);
-      callback([]);
-    } else {
-      callback(rows);
+// Initialize DB and ensure the messages table exists
+async function initDB() {
+    try {
+        await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        sender_id TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        console.log("✅ Database initialized: messages table ready");
+    } catch (err) {
+        console.error("❌ Error initializing database:", err);
     }
-  });
 }
 
-module.exports = { logMessage, getRecentMessages };
+// Insert a message into the database
+async function saveMessage(senderId, message) {
+    try {
+        await pool.query(
+            `INSERT INTO messages (sender_id, message) VALUES ($1, $2)`,
+            [senderId, message]
+        );
+        console.log("💾 Saved message:", senderId, message);
+    } catch (err) {
+        console.error("❌ Error saving message:", err);
+    }
+}
+
+// Fetch recent messages (for seeds, memory, etc.)
+async function getRecentMessages(limit = 20) {
+    try {
+        const result = await pool.query(
+            `SELECT * FROM messages ORDER BY timestamp DESC LIMIT $1`,
+            [limit]
+        );
+        return result.rows;
+    } catch (err) {
+        console.error("❌ Error fetching messages:", err);
+        return [];
+    }
+}
+
+module.exports = { pool, initDB, saveMessage, getRecentMessages };
