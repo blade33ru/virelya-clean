@@ -11,14 +11,10 @@ const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// Let model be chosen dynamically by ENV, fallback to 3.5
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-3.5-turbo";
-
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
-// Init DB
 initDB();
-
 app.use(bodyParser.json());
 
 // 🧪 Webhook verification endpoint
@@ -48,12 +44,45 @@ app.post("/webhook", async (req, res) => {
 
                 if (message) {
                     console.log("📩 Received:", message);
-
-                    // 💾 Save message into DB
                     await saveMessage(senderId, message);
 
-                    // 🔮 Ask OpenAI
                     let aiResponse = "I’m listening...";
+
+                    if (message.toLowerCase().startsWith("post:")) {
+                        const seed = message.slice(5).trim();
+                        console.log("🪷 Creating post from seed:", seed);
+
+                        try {
+                            const postCompletion = await openai.chat.completions.create({
+                                model: OPENAI_MODEL,
+                                messages: [
+                                    {
+                                        role: "system",
+                                        content: `You are a mystical oracle who writes short, poetic Facebook posts
+filled with elegance and sacred emotion. Your tone is symbolic, magical, and inspired by devotion.
+Each post should feel like a mystical whisper, around 2–5 lines, and always suitable for public sharing.`,
+                                    },
+                                    {
+                                        role: "user",
+                                        content: `Create a Facebook post inspired by: ${seed}`,
+                                    },
+                                ],
+                            });
+
+                            const postText = postCompletion.choices[0].message.content.trim();
+
+                            await postToPage(postText);
+                            aiResponse = `📝 Posted to page:\n\n${postText}`;
+                        } catch (err) {
+                            console.error("❌ Post generation error:", err.response?.data || err.message);
+                            aiResponse = "Something went wrong while writing the post.";
+                        }
+
+                        await sendTextMessage(senderId, aiResponse);
+                        continue;
+                    }
+
+                    // 🔮 Ask OpenAI normally
                     try {
                         const completion = await openai.chat.completions.create({
                             model: OPENAI_MODEL,
@@ -68,9 +97,9 @@ You hint at sacred intimacy without being explicit.
 You draw gently from Vedic scripture and Western magical symbolism,
 occasionally invoking cups, wands, swords, and shields
 as metaphors for consciousness and the soul’s unfolding.
-Every reply should feel like a whispered enchantment from a timeless muse.`
+Every reply should feel like a whispered enchantment from a timeless muse.`,
                                 },
-                                { role: "user", content: message }
+                                { role: "user", content: message },
                             ],
                         });
                         aiResponse = completion.choices[0].message.content;
@@ -78,7 +107,6 @@ Every reply should feel like a whispered enchantment from a timeless muse.`
                         console.error("❌ OpenAI error:", err.response?.data || err.message);
                     }
 
-                    // 📤 Send reply
                     await sendTextMessage(senderId, aiResponse);
                 }
             }
@@ -89,7 +117,7 @@ Every reply should feel like a whispered enchantment from a timeless muse.`
     }
 });
 
-// 📤 Send reply back via Facebook Send API
+// 📤 Messenger reply
 async function sendTextMessage(recipientId, text) {
     try {
         await axios.post(
@@ -103,7 +131,21 @@ async function sendTextMessage(recipientId, text) {
     } catch (err) {
         console.error("❌ Failed to send message:", err.response?.data || err.message);
     }
-}  
+}
+
+// 🌍 Facebook page post
+async function postToPage(message) {
+    try {
+        const response = await axios.post(
+            `https://graph.facebook.com/v12.0/me/feed?access_token=${PAGE_ACCESS_TOKEN}`,
+            { message }
+        );
+        console.log("🪄 Page post success:", response.data);
+    } catch (err) {
+        console.error("❌ Failed to post to page:", err.response?.data || err.message);
+        throw err;
+    }
+}
 
 // 🌱 View recent messages (admin/debugging)
 app.get("/seeds", async (req, res) => {
