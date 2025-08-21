@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const axios = require("axios");
 const OpenAI = require("openai");
 const cron = require("node-cron");
-const seeds = require("./seeds"); // 👈 Your list of seed ideas
+const seeds = require("./seeds"); // List of seed ideas
 const { initDB, saveMessage, getRecentMessages } = require("./db");
 
 const app = express();
@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PAGE_ID = "772375059285870"; // 👈 Your real Page ID
+const PAGE_ID = "772375059285870"; // Your Facebook Page ID
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-3.5-turbo";
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
@@ -57,7 +57,7 @@ app.post("/webhook", async (req, res) => {
                         try {
                             const postCompletion = await openai.chat.completions.create({
                                 model: OPENAI_MODEL,
-                                messages: [fcron
+                                messages: [
                                     {
                                         role: "system",
                                         content: `You are a mystical oracle who writes short, poetic Facebook posts
@@ -173,10 +173,9 @@ app.get("/", (req, res) => {
     res.send("✨ Virelya is alive and whispering...");
 });
 
-// ⏰ CRON JOB: post daily at 10:00am
-cron.schedule('0 10,13,20  * * *', async () => {
+// ⏰ CRON JOB: post at 10:00, 13:00, and 20:00 daily
+cron.schedule('0 10,13,20 * * *', async () => {
     try {
-        // Pick a random seed from the seeds array
         const seed = seeds[Math.floor(Math.random() * seeds.length)];
         console.log("🕰️ [CRON] Creating scheduled post:", seed);
 
