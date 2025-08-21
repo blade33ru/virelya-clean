@@ -1,4 +1,7 @@
-﻿const express = require("express");
+﻿// ===== DEBUG: Show what port Render is setting =====
+console.log("DEBUG: process.env.PORT =", process.env.PORT);
+
+const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
 const OpenAI = require("openai");
@@ -17,7 +20,7 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-3.5-turbo";
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 initDB();
-app.use(bodyParser.json()); 
+app.use(bodyParser.json());
 
 // 🧪 Webhook verification endpoint
 app.get("/webhook", (req, res) => {
