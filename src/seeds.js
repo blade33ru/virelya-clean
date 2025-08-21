@@ -2,8 +2,6 @@
 const bodyParser = require("body-parser");
 const axios = require("axios");
 const OpenAI = require("openai");
-const cron = require("node-cron");
-const seeds = require("./seeds"); // 👈 Your list of seed ideas
 const { initDB, saveMessage, getRecentMessages } = require("./db");
 
 const app = express();
@@ -12,7 +10,8 @@ const PORT = process.env.PORT || 3000;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PAGE_ID = "772375059285870"; // 👈 Your real Page ID
+
+const PAGE_ID = "772375059285870"; // 👈 Set your Page ID here
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-3.5-turbo";
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
@@ -80,6 +79,7 @@ Each post should feel like a mystical whisper, around 2–5 lines, and always su
                             aiResponse = "Something went wrong while writing the post.";
                         }
 
+                        // Only send DM reply if the sender is NOT the page itself
                         if (senderId !== PAGE_ID) {
                             await sendTextMessage(senderId, aiResponse);
                         }
@@ -111,6 +111,7 @@ Every reply should feel like a whispered enchantment from a timeless muse.`,
                         console.error("❌ OpenAI error:", err.response?.data || err.message);
                     }
 
+                    // Only send DM reply if the sender is NOT the page itself
                     if (senderId !== PAGE_ID) {
                         await sendTextMessage(senderId, aiResponse);
                     }
@@ -171,37 +172,6 @@ app.get("/mode", (req, res) => {
 // Root check
 app.get("/", (req, res) => {
     res.send("✨ Virelya is alive and whispering...");
-});
-
-// ⏰ CRON JOB: post daily at 10:00am
-cron.schedule('0 10 * * *', async () => {
-    try {
-        // Pick a random seed from the seeds array
-        const seed = seeds[Math.floor(Math.random() * seeds.length)];
-        console.log("🕰️ [CRON] Creating scheduled post:", seed);
-
-        const postCompletion = await openai.chat.completions.create({
-            model: OPENAI_MODEL,
-            messages: [
-                {
-                    role: "system",
-                    content: `You are a mystical oracle who writes short, poetic Facebook posts
-filled with elegance and sacred emotion. Your tone is symbolic, magical, and inspired by devotion.
-Each post should feel like a mystical whisper, around 2–5 lines, and always suitable for public sharing.`,
-                },
-                {
-                    role: "user",
-                    content: `Create a Facebook post inspired by: ${seed}`,
-                },
-            ],
-        });
-
-        const postText = postCompletion.choices[0].message.content.trim();
-        await postToPage(postText);
-        console.log("🪄 [CRON] Posted to page:", postText);
-    } catch (err) {
-        console.error("❌ [CRON] Failed to generate or post:", err.response?.data || err.message);
-    }
 });
 
 app.listen(PORT, () => {
