@@ -57,7 +57,7 @@ app.post("/webhook", async (req, res) => {
                         try {
                             const postCompletion = await openai.chat.completions.create({
                                 model: OPENAI_MODEL,
-                                messages: [
+                                messages: [fcron
                                     {
                                         role: "system",
                                         content: `You are a mystical oracle who writes short, poetic Facebook posts
@@ -174,7 +174,7 @@ app.get("/", (req, res) => {
 });
 
 // ⏰ CRON JOB: post daily at 10:00am
-cron.schedule('0 10 * * *', async () => {
+cron.schedule('0 10,13,20  * * *', async () => {
     try {
         // Pick a random seed from the seeds array
         const seed = seeds[Math.floor(Math.random() * seeds.length)];
