@@ -1,4 +1,4 @@
-﻿// ===== DEBUG: Show what port Render is setting =====
+﻿app.listen(PORT, '0.0.// ===== DEBUG: Show what port Render is setting =====
 console.log("DEBUG: process.env.PORT =", process.env.PORT);
 
 const express = require("express");
@@ -10,7 +10,7 @@ const seeds = require("./seeds"); // List of seed ideas
 const { initDB, saveMessage, getRecentMessages } = require("./db");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 12345;
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
@@ -204,8 +204,7 @@ Each post should feel like a mystical whisper, around 2–5 lines, and always su
     } catch (err) {
         console.error("❌ [CRON] Failed to generate or post:", err.response?.data || err.message);
     }
-});
-
+});cess.env.PORT || 12345;
 app.listen(PORT,'0.0.0.0', () => {
     console.log(`🚀 Virelya listening on port ${PORT}, using model: ${OPENAI_MODEL}`);
 });
