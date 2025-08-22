@@ -209,4 +209,4 @@ Each post should feel like a mystical whisper, around 2–5 lines, and always su
 // ** The listen block should always be LAST **
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Virelya listening on port ${PORT}, using model: ${OPENAI_MODEL}`);
-});
+});  
