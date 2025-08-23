@@ -16,5 +16,8 @@
     "openai": "^5.12.2",
     "pg": "^8.11.3",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10"
   }
 }
