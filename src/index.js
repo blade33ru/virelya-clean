@@ -1,5 +1,12 @@
-﻿// ===== DEBUG: Show what port Render is setting =====
+﻿// ===== DEBUG: Print ALL env keys and values at launch =====
+console.log("DEBUG: process.env keys =", Object.keys(process.env));
+console.log("DEBUG: process.env =", JSON.stringify(process.env, null, 2));
 console.log("DEBUG: process.env.PORT =", process.env.PORT);
+console.log("DEBUG: process.env.OPENAI_API_KEY =", process.env.OPENAI_API_KEY ? '[set]' : '[undefined]');
+console.log("DEBUG: process.env.PAGE_ACCESS_TOKEN =", process.env.PAGE_ACCESS_TOKEN ? '[set]' : '[undefined]');
+console.log("DEBUG: process.env.VERIFY_TOKEN =", process.env.VERIFY_TOKEN ? '[set]' : '[undefined]');
+console.log("DEBUG: process.env.PAGE_ID =", process.env.PAGE_ID ? process.env.PAGE_ID : '[undefined]');
+console.log("DEBUG: process.env.OPENAI_MODEL =", process.env.OPENAI_MODEL ? process.env.OPENAI_MODEL : '[undefined]');
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -12,10 +19,13 @@ const { initDB, saveMessage, getRecentMessages } = require("./db");
 const app = express();
 const PORT = process.env.PORT || 12345;
 
+// DEBUG: Print which PORT will be used
+console.log("DEBUG: Final PORT used:", PORT);
+
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const PAGE_ID = "772375059285870"; // Your Facebook Page ID
+const PAGE_ID = process.env.PAGE_ID || "772375059285870"; // Use env var if present
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-3.5-turbo";
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
@@ -209,4 +219,4 @@ Each post should feel like a mystical whisper, around 2–5 lines, and always su
 // ** The listen block should always be LAST **
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Virelya listening on port ${PORT}, using model: ${OPENAI_MODEL}`);
-});  
+});
