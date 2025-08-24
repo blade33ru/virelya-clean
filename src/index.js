@@ -16,6 +16,16 @@ const cron = require("node-cron");
 const seeds = require("./seeds"); // List of seed ideas
 const { initDB, saveMessage, getRecentMessages } = require("./db");
 
+// --- Twitter/X integration ---
+const { TwitterApi } = require('twitter-api-v2');
+const twitterClient = new TwitterApi({
+  appKey: process.env.TWITTER_API_KEY,
+  appSecret: process.env.TWITTER_API_SECRET,
+  accessToken: process.env.TWITTER_ACCESS_TOKEN,
+  accessSecret: process.env.TWITTER_ACCESS_SECRET,
+});
+// --- End Twitter/X setup ---
+
 const app = express();
 const PORT = process.env.PORT || 12345;
 
@@ -86,8 +96,14 @@ Each post should feel like a mystical whisper, around 2–5 lines, and always su
 
                             const postText = postCompletion.choices[0].message.content.trim();
 
+                            // --- Post to Facebook and X ---
                             await postToPage(postText);
-                            aiResponse = `📝 Posted to page:\n\n${postText}`;
+                            try {
+                                await postToX(postText);
+                                aiResponse = `📝 Posted to Facebook and X:\n\n${postText}`;
+                            } catch (err) {
+                                aiResponse = `📝 Posted to Facebook, but X failed:\n\n${postText}`;
+                            }
                         } catch (err) {
                             console.error("❌ Post generation error:", err.response?.data || err.message);
                             aiResponse = "Something went wrong while writing the post.";
@@ -170,6 +186,19 @@ async function postToPage(message) {
     }
 }
 
+// 📣 Crosspost to X (Twitter)
+async function postToX(status) {
+    console.log('🟦 Attempting to post to X:', status); // ADDED LOGGING!
+    try {
+        const { data } = await twitterClient.v2.tweet(status);
+        console.log('🪄 Tweet success:', data);
+        return data;
+    } catch (err) {
+        console.error('❌ Failed to post to X:', err.response?.data || err.message, err); // LOG FULL ERROR
+        throw err;
+    }
+}
+
 // 🌱 View recent messages (admin/debugging)
 app.get("/seeds", async (req, res) => {
     const messages = await getRecentMessages(50);
@@ -210,7 +239,12 @@ Each post should feel like a mystical whisper, around 2–5 lines, and always su
 
         const postText = postCompletion.choices[0].message.content.trim();
         await postToPage(postText);
-        console.log("🪄 [CRON] Posted to page:", postText);
+        try {
+            await postToX(postText);
+            console.log('🪄 [CRON] Posted to Facebook and X:', postText);
+        } catch (err) {
+            console.error("❌ [CRON] Failed to post to X:", err.response?.data || err.message);
+        }
     } catch (err) {
         console.error("❌ [CRON] Failed to generate or post:", err.response?.data || err.message);
     }
@@ -219,4 +253,4 @@ Each post should feel like a mystical whisper, around 2–5 lines, and always su
 // ** The listen block should always be LAST **
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Virelya listening on port ${PORT}, using model: ${OPENAI_MODEL}`);
-});  
+});
